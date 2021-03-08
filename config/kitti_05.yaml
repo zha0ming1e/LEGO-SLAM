@@ -1,0 +1,22 @@
+%YAML:1.0
+
+# KITTI dataset path
+dataset_dir: /home/XXX/dataset/KITTI/data_odometry_gray/05
+
+# follow frame: 0 is false, 1 is true
+follow_frame: 0
+
+# camera intrinsics
+camera.fx: 517.3
+camera.fy: 516.5
+camera.cx: 325.1
+camera.cy: 249.7
+
+# parameters
+num_features: 150
+num_features_init: 50
+num_features_tracking: 20
+
+# depth superior limit of the stereo cameras
+stereo_depth_inferior_limit: 8
+stereo_depth_superior_limit: 250
