@@ -36,7 +36,7 @@ namespace legoslam {
     }
 
     void Viewer::ThreadLoop() {
-        pangolin::CreateWindowAndBind("MyStereoSLAM", 1024, 768);
+        pangolin::CreateWindowAndBind("LEGO-SLAM", 1024, 768);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
