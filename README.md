@@ -2,7 +2,7 @@
 
 # LEGO-SLAM #
 
-**LEGO-SLAM** is a light weight stereo visual SLAM system which contains multi *hand-made* modules, such as a frontend with the pyramid LK optical flow method based on the Gauss-Newton algorithm and a backend with the graph-based Levenberg-Marquardt optimization algorithm ([**LEGO**](https://github.com/zha0ming1e/LEGO) or [**g2o**](https://github.com/RainerKuemmerle/g2o) (optional)). Generally speaking, LEGO-SLAM is a silding-window stereo visual SLAM framework for learning and practicing visual SLAM theories. Now, the optimization algorithm in the backend ([LEGO](https://github.com/zha0ming1e/LEGO)) only depends on the Levenberg-Marquardt algorithm and it will include more algorithms in the future, such as Dog-leg. Moreover, the loop-closure module will be implemented in the near future. This version is only tested on Ubuntu 18.04. 
+**LEGO-SLAM** is a light weight stereo visual SLAM system which contains multi *hand-made* modules, such as a frontend with the pyramid LK optical flow method based on the Gauss-Newton algorithm & OpenCV ParallelLoopBody and a backend with the graph-based Levenberg-Marquardt optimization algorithm ([**LEGO**](https://github.com/zha0ming1e/LEGO) or [**g2o**](https://github.com/RainerKuemmerle/g2o) (optional)). Generally speaking, LEGO-SLAM is a silding-window stereo visual SLAM framework for learning and practicing visual SLAM theories. Now, the optimization algorithm in the backend ([LEGO](https://github.com/zha0ming1e/LEGO)) only depends on the Levenberg-Marquardt algorithm and it will include more algorithms in the future, such as Dog-leg. Moreover, the loop-closure module will be implemented in the near future. This version is only tested on Ubuntu 18.04.
 
 
 
