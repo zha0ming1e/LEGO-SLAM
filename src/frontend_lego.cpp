@@ -179,7 +179,7 @@ namespace legoslam {
                 features.push_back(feat_left);
 
                 std::shared_ptr<EdgeProjectionPoseOnly> edge(new EdgeProjectionPoseOnly(mp->pos_, K));
-                //edge->setId(index);
+                edge->setId(index);
                 std::vector<std::shared_ptr<lego::BaseVertex>> edge_vertexes;
                 edge_vertexes.push_back(vertex_pose);
                 edge->setVertex(edge_vertexes);
@@ -227,9 +227,15 @@ namespace legoslam {
         LOG(INFO) << "Outlier/Inlier in pose estimating: " << cnt_outlier << "/" << features.size() - cnt_outlier;
 
         // set pose and outliers
-        Vec7 v_esti = vertex_pose->getEstimate();
-        SE3 T(Eigen::Quaterniond(v_esti[6], v_esti[3], v_esti[4], v_esti[5]),
-              v_esti.head<3>());
+//            // 7 DoF
+//        Vec7 v_esti = vertex_pose->getEstimate();
+//        SE3 T(Eigen::Quaterniond(v_esti[6], v_esti[3], v_esti[4], v_esti[5]),
+//              v_esti.head<3>());
+
+        // 6 DoF
+        Vec6 v_esti = vertex_pose->getEstimate();
+        SE3 T = SE3::exp(v_esti);
+
         current_frame_->SetPose(T);
 
         LOG(INFO) << "Current Pose = \n" << current_frame_->Pose().matrix();

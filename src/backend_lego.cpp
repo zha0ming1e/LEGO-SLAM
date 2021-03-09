@@ -65,7 +65,7 @@ namespace legoslam {
             auto kf = keyframe.second;
             // camera vertex_pose
             std::shared_ptr<VertexPose> vertex_pose(new VertexPose());
-            //vertex_pose->setId(kf->keyframe_id_);
+            vertex_pose->setId(kf->keyframe_id_);
             vertex_pose->setEstimate(kf->Pose());
             problem.addVertex(vertex_pose);
 
@@ -123,7 +123,7 @@ namespace legoslam {
                 if (vertices_landmarks.find(landmark_id) == vertices_landmarks.end()) {
                     std::shared_ptr<VertexXYZ> v(new VertexXYZ());
                     v->setEstimate(landmark.second->Pos());
-                    //v->setId(landmark_id + max_kf_id + 1);
+                    v->setId(landmark_id + max_kf_id + 1);
                     //v->setMarginalized(true);
                     vertices_landmarks.insert({landmark_id, v});
                     problem.addVertex(v);
@@ -194,9 +194,15 @@ namespace legoslam {
 
         // set pose and landmark position
         for (auto &v0 : vertices) {
-            Vec7 v0_esti = v0.second->getEstimate();
-            SE3 T(Eigen::Quaterniond(v0_esti[6], v0_esti[3], v0_esti[4], v0_esti[5]),
-                  v0_esti.head<3>());
+//            // 7 DoF
+//            Vec7 v0_esti = v0.second->getEstimate();
+//            SE3 T(Eigen::Quaterniond(v0_esti[6], v0_esti[3], v0_esti[4], v0_esti[5]),
+//                  v0_esti.head<3>());
+
+            // 6 DoF
+            Vec6 v0_esti = v0.second->getEstimate();
+            SE3 T = SE3::exp(v0_esti);
+
             keyframes.at(v0.first)->SetPose(T);
         }
 

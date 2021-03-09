@@ -7,11 +7,11 @@ add_library(legoslam SHARED
         config.cpp
         feature.cpp
 
-        # frontend and backend based on lego
+        # lego
 #        frontend_lego.cpp
 #        backend_lego.cpp
 
-        # frontend and backend based on g2o
+        # g2o
         frontend_g2o.cpp
         backend_g2o.cpp
 
