@@ -2,11 +2,18 @@
 #define LEGOSLAM_G2O_TYPES_H
 
 #include "legoslam/common_include.h"
-// LEGO
+
+// LEGO lib
 #include <lego/base/base_vertex.h>
 #include <lego/base/base_edge.h>
 #include <lego/base/cost_function.h>
 #include <lego/base/problem.h>
+
+// lego base
+//#include "../lego/base/base_vertex.h"
+//#include "../lego/base/base_edge.h"
+//#include "../lego/base/cost_function.h"
+//#include "../lego/base/problem.h"
 
 namespace legoslam {
 
