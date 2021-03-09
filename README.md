@@ -56,7 +56,7 @@
   cmake .. && make -j6 
   ```
 
-​		Now we have already built the LEGO-SLAM and then we can test and run it. 
+  Now we have already built the LEGO-SLAM and then we can test and run it.
 
 - **Test and Run**: There will be 2 executable files under the **bin/** folder 
 
