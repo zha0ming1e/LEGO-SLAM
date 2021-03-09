@@ -19,7 +19,7 @@ add_library(legoslam SHARED
         visual_odometry.cpp
         dataset.cpp
 
-        # lego lib
+        # lego base lib
         lego/base/base_vertex.cpp
         lego/base/base_edge.cpp
         lego/base/cost_function.cpp
