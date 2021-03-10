@@ -253,9 +253,9 @@ namespace legoslam {
 
     int Frontend::TrackLastFrame() {
         // 1. OpenCV optical flow
-        //int num_good_pts = TrackLastFrameLKOpticalFlowOpenCV();
+        int num_good_pts = TrackLastFrameLKOpticalFlowOpenCV();
         // 2. four layers LK optical flow with Gauss-Newton method
-        int num_good_pts = TrackLastFrameLKOpticalFlow4LayerSelf();
+//        int num_good_pts = TrackLastFrameLKOpticalFlow4LayerSelf();
 
         LOG(INFO) << "Find " << num_good_pts << " in the last image. ";
 
@@ -305,9 +305,9 @@ namespace legoslam {
 
     int Frontend::FindFeaturesInRight() {
         // 1. OpenCV
-        //int num_good_pts = FindFeaturesInRightLKOpticalFlowOpenCV();
+        int num_good_pts = FindFeaturesInRightLKOpticalFlowOpenCV();
         // 2. four layers LK optical flow with Gauss-Newton method
-        int num_good_pts = FindFeaturesInRightLKOpticalFlow4LayerSelf();
+//        int num_good_pts = FindFeaturesInRightLKOpticalFlow4LayerSelf();
 
         LOG(INFO) << "Find: " << num_good_pts << " in the right image. ";
 
