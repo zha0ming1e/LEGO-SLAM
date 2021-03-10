@@ -227,12 +227,12 @@ namespace legoslam {
         LOG(INFO) << "Outlier/Inlier in pose estimating: " << cnt_outlier << "/" << features.size() - cnt_outlier;
 
         // set pose and outliers
-//            // 7 DoF
+//            // 7D
 //        Vec7 v_esti = vertex_pose->getEstimate();
 //        SE3 T(Eigen::Quaterniond(v_esti[6], v_esti[3], v_esti[4], v_esti[5]),
 //              v_esti.head<3>());
 
-        // 6 DoF
+        // 6D
         Vec6 v_esti = vertex_pose->getEstimate();
         SE3 T = SE3::exp(v_esti);
 

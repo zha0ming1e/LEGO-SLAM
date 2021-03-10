@@ -194,12 +194,12 @@ namespace legoslam {
 
         // set pose and landmark position
         for (auto &v0 : vertices) {
-//            // 7 DoF
+//            // 7D
 //            Vec7 v0_esti = v0.second->getEstimate();
 //            SE3 T(Eigen::Quaterniond(v0_esti[6], v0_esti[3], v0_esti[4], v0_esti[5]),
 //                  v0_esti.head<3>());
 
-            // 6 DoF
+            // 6D
             Vec6 v0_esti = v0.second->getEstimate();
             SE3 T = SE3::exp(v0_esti);
 

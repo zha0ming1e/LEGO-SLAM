@@ -27,15 +27,15 @@ namespace legoslam {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         VertexPose() : lego::BaseVertex(6, 6) {
-//            // 7 DoF
+//            // 7D
 //            estimate_ = Vec7::Zero();
 
-            // 6 DoF
+            // 6D
             estimate_ = Vec6::Zero();
         }
 
         void setEstimate(const SE3 &T) {
-//            // 7 DoF
+//            // 7D
 //            const auto &t = T.translation();
 //            const auto R = T.rotationMatrix();
 //            auto q = Eigen::Quaterniond(R);
@@ -47,7 +47,7 @@ namespace legoslam {
 //            estimate_[5] = q.z();
 //            estimate_[6] = q.w();
 
-            // 6 DoF
+            // 6D
             estimate_ = T.log();
         }
 
@@ -62,7 +62,7 @@ namespace legoslam {
             else
                 update_eigen << update[0], update[1], update[2], update[3], update[4], update[5];
 
-//            // 7 DoF
+//            // 7D
 //            // translation
 //            estimate_.head<3>() += update_eigen.head<3>();
 //            // rotation
@@ -77,7 +77,7 @@ namespace legoslam {
 //            estimate_[5] = q.z();
 //            estimate_[6] = q.w();
 
-            // 6 DoF
+            // 6D
             estimate_ = (SE3::exp(update_eigen) * SE3::exp(estimate_)).log();
         }
 
@@ -117,12 +117,12 @@ namespace legoslam {
         }
 
         void computeResidual() override {
-//            // 7 DoF
+//            // 7D
 //            const Vec7 v_pose_est = vertexes_[0]->getEstimate();
 //            SE3 T(Eigen::Quaterniond(v_pose_est[6], v_pose_est[3], v_pose_est[4], v_pose_est[5]),
 //                           v_pose_est.head<3>());
 
-            // 6 DoF
+            // 6D
             const Vec6 v_pose_est = vertexes_[0]->getEstimate();
             SE3 T = SE3::exp(v_pose_est);
 
@@ -132,12 +132,12 @@ namespace legoslam {
         }
 
         void computeJacobians() override {
-//            // 7 DoF
+//            // 7D
 //            const Vec7 v_pose_est = vertexes_[0]->getEstimate();
 //            SE3 T(Eigen::Quaterniond(v_pose_est[6], v_pose_est[3], v_pose_est[4], v_pose_est[5]),
 //                  v_pose_est.head<3>());
 
-            // 6 DoF
+            // 6D
             const Vec6 v_pose_est = vertexes_[0]->getEstimate();
             SE3 T = SE3::exp(v_pose_est);
 
@@ -181,12 +181,12 @@ namespace legoslam {
         }
 
         void computeResidual() override {
-//            // 7 DoF
+//            // 7D
 //            const Vec7 v0_pose_est = vertexes_[0]->getEstimate();
 //            SE3 T(Eigen::Quaterniond(v0_pose_est[6], v0_pose_est[3], v0_pose_est[4], v0_pose_est[5]),
 //                           v0_pose_est.head<3>());
 
-            // 6 DoF
+            // 6D
             const Vec6 v0_pose_est = vertexes_[0]->getEstimate();
             SE3 T = SE3::exp(v0_pose_est);
 
@@ -196,12 +196,12 @@ namespace legoslam {
         }
 
         void computeJacobians() override {
-//            // 7 DoF
+//            // 7D
 //            const Vec7 v0_pose_est = vertexes_[0]->getEstimate();
 //            SE3 T(Eigen::Quaterniond(v0_pose_est[6], v0_pose_est[3], v0_pose_est[4], v0_pose_est[5]),
 //                           v0_pose_est.head<3>());
 
-            // 6 DoF
+            // 6D
             const Vec6 v0_pose_est = vertexes_[0]->getEstimate();
             SE3 T = SE3::exp(v0_pose_est);
 
