@@ -18,6 +18,8 @@ namespace lego {
      */
     class Problem {
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
         /*
          * ProblemType: BASE or SLAM
          *              |
@@ -31,12 +33,31 @@ namespace lego {
             SLAM
         };
 
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+        enum class AlgorithmType {
+            /// LM: Levenberg-Marquardt algorithm
+            LM,
+            /// DL: Dog-leg algorithm
+            DL,
+            /// GN: Gauss-Newton algorithm
+            GN
+        };
+
+        enum class StrategyType {
+            /// DEFAULT: default strategy
+            DEFAULT,
+            /// STRATEGY1: strategy 1
+            STRATEGY1
+        };
 
         /// constructor
-        explicit Problem(ProblemType problemType);
+        Problem(ProblemType problemType=ProblemType::SLAM, AlgorithmType algorithmType=AlgorithmType::LM, StrategyType strategyType=StrategyType::DEFAULT);
         /// destructor
         ~Problem();
+
+        /// set types
+        void setProblemType(ProblemType problemType) { problemType_ = problemType; }
+        void setAlgorithmType(AlgorithmType algorithmType) { algorithmType_ = algorithmType; }
+        void setStrategyType(StrategyType strategyType) { strategyType_ = strategyType; }
 
         /// add vertex
         bool addVertex(const std::shared_ptr<BaseVertex> &vertex);
@@ -139,7 +160,10 @@ namespace lego {
         /// the coe to control lambda
         double ni_;
 
+        /// types
         ProblemType problemType_;
+        AlgorithmType algorithmType_;
+        StrategyType strategyType_;
 
         /// hessian
         MatXX Hessian_;

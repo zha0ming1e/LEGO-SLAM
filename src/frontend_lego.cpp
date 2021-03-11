@@ -157,6 +157,8 @@ namespace legoslam {
     int Frontend::EstimateCurrentPose() {
         // setup lego problem
         lego::Problem problem(lego::Problem::ProblemType::SLAM);
+        // strategy
+        //problem.setStrategyType(lego::Problem::StrategyType::STRATEGY1);
         problem.setVerbose(false);
 
         // vertex

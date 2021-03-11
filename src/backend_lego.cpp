@@ -56,6 +56,8 @@ namespace legoslam {
     void Backend::Optimize(Map::KeyframesType &keyframes, Map::LandmarksType &landmarks) {
         // setup lego problem
         lego::Problem problem(lego::Problem::ProblemType::SLAM);
+        // strategy
+        //problem.setStrategyType(lego::Problem::StrategyType::STRATEGY1);
         //problem.setVerbose(false);
 
         // add vertex and edges

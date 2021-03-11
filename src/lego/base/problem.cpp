@@ -22,7 +22,9 @@ namespace lego {
          //          << ", Edges = " << edges_.size();
     }
 
-    Problem::Problem(ProblemType problemType) : problemType_(problemType) {
+    Problem::Problem(ProblemType problemType, AlgorithmType algorithmType, StrategyType strategyType)
+            : problemType_(problemType), algorithmType_(algorithmType), strategyType_(strategyType) {
+        /// initialization
         logoutVectorSize();
         vertexes_marg_.clear();
     }
@@ -361,8 +363,17 @@ namespace lego {
         if (problemType_ == ProblemType::BASE) {
             MatXX H = Hessian_;
             for (long i = 0; i < Hessian_.cols(); ++i) {
-                H(i, i) += currentLambda_;
+                /// strategy
+                if (strategyType_ == StrategyType::DEFAULT) {
+                    /// default strategy
+                    H(i, i) += currentLambda_;
+                }
+                else if (strategyType_ == StrategyType::STRATEGY1) {
+                    /// strategy 1
+                    H(i, i) += currentLambda_ * H(i, i);
+                }
             }
+            /// Cholesky decomposition
             delta_x_ = H.ldlt().solve(b_);
             //delta_x_ = PCGSolver(H, b_, H.rows() * 2);
         } else {
@@ -394,7 +405,15 @@ namespace lego {
             /// step 2: solve Hpp * delta_x = bpp
             VecX delta_x_pp(VecX::Zero(reserve_size));
             for (ulong i = 0; i < ordering_poses_; ++i) {
-                H_pp_schur_(i, i) += currentLambda_;
+                /// strategy
+                if (strategyType_ == StrategyType::DEFAULT) {
+                    /// default strategy
+                    H_pp_schur_(i, i) += currentLambda_;
+                }
+                else if (strategyType_ == StrategyType::STRATEGY1) {
+                    /// strategy 1
+                    H_pp_schur_(i, i) += currentLambda_ * H_pp_schur_(i, i);
+                }
             }
             delta_x_pp =  H_pp_schur_.ldlt().solve(b_pp_schur_);
             delta_x_.head(reserve_size) = delta_x_pp;
@@ -456,19 +475,26 @@ namespace lego {
 
         /// stop threshold of iteration
         stopThresholdLM_ = 1e-10 * currentChi_;
-        double maxDiagonal = 0;
-        ulong size = Hessian_.cols();
-        assert(Hessian_.rows() == Hessian_.cols() && "Hessian is not square matrix. ");
-        /// is set the initial lambda
-        if (!isSetInitialLambda_) {
-            for (ulong i = 0; i < size; ++i)
-                maxDiagonal = std::max(std::abs(Hessian_(i, i)), maxDiagonal);
+        /// strategy
+        if (strategyType_ == StrategyType::DEFAULT) {
+            /// default strategy
+            double maxDiagonal = 0;
+            ulong size = Hessian_.cols();
+            assert(Hessian_.rows() == Hessian_.cols() && "Hessian is not square matrix. ");
+            /// is set the initial lambda
+            if (!isSetInitialLambda_) {
+                for (ulong i = 0; i < size; ++i)
+                    maxDiagonal = std::max(std::abs(Hessian_(i, i)), maxDiagonal);
 
-            maxDiagonal = std::min(5e10, maxDiagonal);
-            double tau = 1e-5;
-            currentLambda_ = tau * maxDiagonal;
-        } else {
-            currentLambda_ = initialLambda_;
+                maxDiagonal = std::min(5e10, maxDiagonal);
+                double tau = 1e-5;
+                currentLambda_ = tau * maxDiagonal;
+            } else {
+                currentLambda_ = initialLambda_;
+            }
+        } else if (strategyType_ == StrategyType::STRATEGY1) {
+            /// strategy 1
+            currentLambda_ = 1e-5;
         }
     }
 
@@ -487,10 +513,6 @@ namespace lego {
     }
 
     bool Problem::isGoodStepInLM() {
-        double scale = 0;
-        scale = 0.5 * delta_x_.transpose() * (currentLambda_ * delta_x_ + b_);
-        scale += 1e-10;
-
         /// recompute residuals after state updated
         double tempChi = 0.0;
         for (auto &edge : edges_) {
@@ -501,22 +523,55 @@ namespace lego {
             tempChi += err_prior_.squaredNorm();
         tempChi *= 0.5;
 
-        double rho = (currentChi_ - tempChi) / scale;
-        /// rho > 0: cost is decreasing
-        if (rho > 0 && std::isfinite(tempChi)) {
-            double alpha = 1.0 - std::pow((2 * rho - 1), 3);
-            alpha = std::min(alpha, 2.0 / 3.0);
-            double scaleFactor = std::max(1.0 / 3.0, alpha);
-            currentLambda_ *= scaleFactor;
-            ni_ = 2;
-            currentChi_ = tempChi;
+        /// strategy
+        if (strategyType_ == StrategyType::DEFAULT) {
+            /// default strategy
+            double scale = 0;
+            scale = 0.5 * delta_x_.transpose() * (currentLambda_ * delta_x_ + b_);
+            scale += 1e-10;
 
-            return true;
-        } else {
-            currentLambda_ *= ni_;
-            ni_ *= 2;
+            double rho = (currentChi_ - tempChi) / scale;
+            /// rho > 0: cost is decreasing
+            if (rho > 0 && std::isfinite(tempChi)) {
+                double alpha = 1.0 - std::pow((2 * rho - 1), 3);
+                alpha = std::min(alpha, 2.0 / 3.0);
+                double scaleFactor = std::max(1.0 / 3.0, alpha);
+                currentLambda_ *= scaleFactor;
+                ni_ = 2;
+                currentChi_ = tempChi;
 
-            return false;
+                return true;
+            } else {
+                currentLambda_ *= ni_;
+                ni_ *= 2;
+
+                return false;
+            }
+        } else if (strategyType_ == StrategyType::STRATEGY1) {
+            /// strategy 1
+            ulong size = delta_x_.rows();
+            // diag(Hessian_)
+            MatXX diag_Hessian(MatXX::Zero(size, size));
+            for (ulong i = 0; i < size; ++i)
+                diag_Hessian(i, i) = Hessian_(i, i);
+            // scale: denominator of rho
+            double scale = 0;
+            scale = 0.5 * delta_x_.transpose() * (currentLambda_ * diag_Hessian * delta_x_ + b_);
+            scale += 1e-10;
+
+            double rho = (currentChi_ - tempChi) / scale;
+            /// rho > 0: cost is decreasing
+            double L_down = 9.0, L_up = 11.0;
+            if (rho > 0 && std::isfinite(tempChi)) {
+                currentLambda_ = std::max(currentLambda_ / L_down, 1e-7);
+                currentChi_ = tempChi;
+
+                return true;
+            } else {
+                currentLambda_ = std::min(currentLambda_ * L_up, 1e7);
+
+                return false;
+            }
         }
     }
 
