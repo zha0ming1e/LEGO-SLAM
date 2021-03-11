@@ -157,6 +157,7 @@ namespace legoslam {
     int Frontend::EstimateCurrentPose() {
         // setup lego problem
         lego::Problem problem(lego::Problem::ProblemType::SLAM);
+        problem.setVerbose(false);
 
         // vertex
         std::shared_ptr<VertexPose> vertex_pose(new VertexPose());

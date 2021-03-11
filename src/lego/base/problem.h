@@ -77,6 +77,8 @@ namespace lego {
             isSetInitialLambda_ = true;
             initialLambda_ = initLambda;
         }
+        /// set verbose
+        void setVerbose(bool verb) { verbose_ = verb; }
 
         /// extend hessian prior matrix size to fit new data
         void extendHessiansPriorSize(int dim);
@@ -185,6 +187,9 @@ namespace lego {
         bool bDebug = false;
         double t_hessian_cost_ = 0.0;
         double t_PCGsovle_cost_ = 0.0;
+
+        // is verbose or not
+        bool verbose_ = true;
     };
 }
 #endif  // LEGO_PROBLEM_H

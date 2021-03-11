@@ -1,6 +1,6 @@
 #pragma once
 
-#include "eigen3_types.h"
+#include "lego/base/eigen3_types.h"
 
 class Utility {
 public:

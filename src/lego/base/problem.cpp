@@ -158,7 +158,7 @@ namespace lego {
             return false;
         }
 
-        std::cout << "==========LEGO OPTIMIZER==========" << std::endl;
+        if (verbose_) std::cout << "==========LEGO OPTIMIZER==========" << std::endl;
 
         Timer t_cost;
         /// calculate the dimension of the problem for building hessian matrix
@@ -175,9 +175,12 @@ namespace lego {
         double last_chi_ = 1e20;
         const int false_cnt_threshold = 10;
         while (!stop && (iter < iterations)) {
-            std::cout << "Iteration = " << iter
-                      << ",\tChi = " << currentChi_
-                      << ",\tLambda = " << currentLambda_ << std::endl;
+            if (verbose_) {
+                std::cout << "Iteration = " << iter
+                          << ",\tChi = " << currentChi_
+                          << ",\tLambda = " << currentLambda_ << std::endl;
+            }
+
             bool oneStepSuccess = false;
             int false_cnt = 0;
             /// try Lambda until a successful iteration step
@@ -203,16 +206,22 @@ namespace lego {
 
             /// quit the optimization
             if (last_chi_ - currentChi_ < 1e-5) {
-                std::cout << "\nStop the optimization: "
-                          << "[last_chi_(" << last_chi_ << ") - currentChi_(" << currentChi_ << ") = "
-                          << last_chi_ -currentChi_
-                          << "] < 1e-5" << std::endl;
+                if (verbose_) {
+                    std::cout << "\nStop the optimization: "
+                              << "[last_chi_(" << last_chi_ << ") - currentChi_(" << currentChi_ << ") = "
+                              << last_chi_ - currentChi_
+                              << "] < 1e-5" << std::endl;
+                }
                 stop = true;
             }
             last_chi_ = currentChi_;
         }
-        std::cout << "\nInfo: \nTimeCost(SolveProblem) = " << t_cost.toc() << " ms" << std::endl;
-        std::cout << "TimeCost(BuildHessian) = " << t_hessian_cost_ << " ms" << std::endl;
+
+        double tc = t_cost.toc();
+        if (verbose_) {
+            std::cout << "\nInfo: \nTimeCost(SolveProblem) = " << tc << " ms" << std::endl;
+            std::cout << "TimeCost(BuildHessian) = " << t_hessian_cost_ << " ms" << std::endl;
+        }
         t_hessian_cost_ = 0.0;
 
         return true;
@@ -269,7 +278,7 @@ namespace lego {
 
 /// openmp for accelerating
 #ifdef USE_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for num_threads(4)
 #endif
         for (auto &edge : edges_) {
             /// compute residual and jacobian
@@ -370,7 +379,7 @@ namespace lego {
             MatXX Hmm_inv(MatXX::Zero(marg_size, marg_size));
 /// openmp for accelerating
 #ifdef USE_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for num_threads(4)
 #endif
             for (auto &landmarkVertex : idx_landmark_vertexes_) {
                 ulong idx = landmarkVertex.second->getOrderingId() - reserve_size;
@@ -606,7 +615,7 @@ namespace lego {
                 b_marg.segment(index_i, dim_i) -= drho * jacobian_i.transpose() * edge->getInformation() * edge->getResidual();
             }
         }
-        std::cout << "Maginalization: Edge factor count = " << ii <<std::endl;
+        if (verbose_) std::cout << "Maginalization: Edge factor count = " << ii <<std::endl;
 
         /// marginalize landmark
         int reserve_size = pose_dim;
@@ -622,7 +631,7 @@ namespace lego {
             MatXX Hmm_inv(MatXX::Zero(marg_size, marg_size));
 /// openmp for accelerating
 #ifdef USE_OPENMP
-#pragma omp parallel for
+#pragma omp parallel for num_threads(4)
 #endif
             for (auto &iter : margLandmark) {
                 ulong idx = iter.second->getOrderingId() - reserve_size;
