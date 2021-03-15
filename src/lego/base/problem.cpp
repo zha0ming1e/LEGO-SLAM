@@ -49,22 +49,22 @@ namespace lego {
         if (isPoseVertex(v)) {
             v->setOrderingId(ordering_poses_);
             idx_pose_vertexes_.insert(std::pair<ulong, std::shared_ptr<BaseVertex>>(v->getId(), v));
-            ordering_poses_ += v->getLocalDim();
+            ordering_poses_ += v->getDoF();
         } else if (isLandmarkVertex(v)) {
             v->setOrderingId(ordering_landmarks_);
-            ordering_landmarks_ += v->getLocalDim();
+            ordering_landmarks_ += v->getDoF();
             idx_landmark_vertexes_.insert(std::pair<ulong, std::shared_ptr<BaseVertex>>(v->getId(), v));
         }
     }
 
     void Problem::resizePoseHessiansWhenAddingPose(const std::shared_ptr<BaseVertex> &v) {
-        int size = H_prior_.rows() + v->getLocalDim();
+        int size = H_prior_.rows() + v->getDoF();
         H_prior_.conservativeResize(size, size);
         b_prior_.conservativeResize(size);
 
-        b_prior_.tail(v->getLocalDim()).setZero();
-        H_prior_.rightCols(v->getLocalDim()).setZero();
-        H_prior_.bottomRows(v->getLocalDim()).setZero();
+        b_prior_.tail(v->getDoF()).setZero();
+        H_prior_.rightCols(v->getDoF()).setZero();
+        H_prior_.bottomRows(v->getDoF()).setZero();
     }
 
     void Problem::extendHessiansPriorSize(int dim) {
@@ -206,13 +206,13 @@ namespace lego {
             }
             ++iter;
 
-            /// quit the optimization
-            if (last_chi_ - currentChi_ < 1e-5) {
+            /// quit the optimization: chi difference between two steps < diffChiThreshold_
+            if (last_chi_ - currentChi_ < diffChiThreshold_) {
                 if (verbose_) {
                     std::cout << "\nStop the optimization: "
                               << "[last_chi_(" << last_chi_ << ") - currentChi_(" << currentChi_ << ") = "
                               << last_chi_ - currentChi_
-                              << "] < 1e-5" << std::endl;
+                              << "] < " << diffChiThreshold_ << std::endl;
                 }
                 stop = true;
             }
@@ -239,7 +239,7 @@ namespace lego {
 
         for (auto &vertex : vertexes_) {
             /// dimension if all vertexes
-            ordering_generic_ += vertex.second->getLocalDim();
+            ordering_generic_ += vertex.second->getDoF();
 
             /// count vertex and edge respectively
             if (problemType_ == ProblemType::SLAM)
@@ -259,12 +259,12 @@ namespace lego {
             int current_ordering = 0;
             for (auto &v : idx_pose_vertexes_) {
                 assert(v.second->getOrderingId() == current_ordering);
-                current_ordering += v.second->getLocalDim();
+                current_ordering += v.second->getDoF();
             }
 
             for (auto &v : idx_landmark_vertexes_) {
                 assert(v.second->getOrderingId() == current_ordering);
-                current_ordering += v.second->getLocalDim();
+                current_ordering += v.second->getDoF();
             }
         }
         return true;
@@ -289,16 +289,16 @@ namespace lego {
 
             /// build the hessian with all blocks
             auto jacobians = edge.second->getJacobians();
-            auto verticies = edge.second->getAllVertexes();
-            assert(jacobians.size() == verticies.size());
-            for (size_t i = 0; i < verticies.size(); ++i) {
-                auto v_i = verticies[i];
+            auto vertexes = edge.second->getAllVertexes();
+            assert(jacobians.size() == vertexes.size());
+            for (size_t i = 0; i < vertexes.size(); ++i) {
+                auto v_i = vertexes[i];
                 /// fixed: jacobian == 0
                 if (v_i->isFixed()) continue;
 
                 auto jacobian_i = jacobians[i];
                 ulong index_i = v_i->getOrderingId();
-                ulong dim_i = v_i->getLocalDim();
+                ulong dim_i = v_i->getDoF();
 
                 /// trivial or robust cost kernel function
                 double drho;
@@ -307,14 +307,14 @@ namespace lego {
 
                 /// jacobian * RobustInformationMatrix
                 MatXX JtW = jacobian_i.transpose() * robustInfo;
-                for (size_t j = i; j < verticies.size(); ++j) {
-                    auto v_j = verticies[j];
+                for (size_t j = i; j < vertexes.size(); ++j) {
+                    auto v_j = vertexes[j];
 
                     if (v_j->isFixed()) continue;
 
                     auto jacobian_j = jacobians[j];
                     ulong index_j = v_j->getOrderingId();
-                    ulong dim_j = v_j->getLocalDim();
+                    ulong dim_j = v_j->getDoF();
 
                     assert(v_j->getOrderingId() != -1);
                     MatXX hessian = JtW * jacobian_j;
@@ -344,7 +344,7 @@ namespace lego {
             for (auto &vertex : vertexes_) {
                 if (isPoseVertex(vertex.second) && vertex.second->isFixed()) {
                     size_t idx = vertex.second->getOrderingId();
-                    size_t dim = vertex.second->getLocalDim();
+                    size_t dim = vertex.second->getDoF();
                     H_prior_tmp.block(idx, 0, dim, H_prior_tmp.cols()).setZero();
                     H_prior_tmp.block(0, idx, H_prior_tmp.rows(), dim).setZero();
                     b_prior_tmp.segment(idx, dim).setZero();
@@ -375,6 +375,7 @@ namespace lego {
             }
             /// Cholesky decomposition
             delta_x_ = H.ldlt().solve(b_);
+            /// PCG solver
             //delta_x_ = PCGSolver(H, b_, H.rows() * 2);
         } else {
             /// step 1: schur complement for marginalization -> Hpp, bpp
@@ -394,7 +395,7 @@ namespace lego {
 #endif
             for (auto &landmarkVertex : idx_landmark_vertexes_) {
                 ulong idx = landmarkVertex.second->getOrderingId() - reserve_size;
-                ulong size = landmarkVertex.second->getLocalDim();
+                ulong size = landmarkVertex.second->getDoF();
                 Hmm_inv.block(idx, idx, size, size) = Hmm.block(idx, idx, size, size).inverse();
             }
 
@@ -415,7 +416,11 @@ namespace lego {
                     H_pp_schur_(i, i) += currentLambda_ * H_pp_schur_(i, i);
                 }
             }
+            /// Cholesky decomposition
             delta_x_pp =  H_pp_schur_.ldlt().solve(b_pp_schur_);
+            /// PCG solver
+            //delta_x_pp = PCGSolver(H_pp_schur_, b_pp_schur_, H_pp_schur_.rows() * 2);
+            /// update
             delta_x_.head(reserve_size) = delta_x_pp;
 
             /// step 3: solve Hmm * delta_x = bmm - Hmp * delta_x_pp
@@ -432,8 +437,9 @@ namespace lego {
             vertex.second->backupEstimate();
 
             ulong idx = vertex.second->getOrderingId();
-            ulong dim = vertex.second->getLocalDim();
+            ulong dim = vertex.second->getDoF();
             VecX delta = delta_x_.segment(idx, dim);
+
             vertex.second->add(delta);
         }
 
@@ -442,7 +448,6 @@ namespace lego {
             /// backup prior in the last iteration
             b_prior_backup_ = b_prior_;
             err_prior_backup_ = err_prior_;
-
             /// update prior with the first order Taylor expansion
             b_prior_ -= H_prior_ * delta_x_.head(ordering_poses_);
             err_prior_ = -Jt_prior_inv_ * b_prior_.head(ordering_poses_ - 15);
@@ -618,12 +623,12 @@ namespace lego {
         /// keep pose vertex ordering, reorder landmark vertex ordering
         int marg_landmark_size = 0;
         for (auto &marg_edge : marg_edges) {
-            auto verticies = marg_edge->getAllVertexes();
-            for (auto &iter : verticies) {
+            auto vertexes = marg_edge->getAllVertexes();
+            for (auto &iter : vertexes) {
                 if (isLandmarkVertex(iter) && margLandmark.find(iter->getId()) == margLandmark.end()) {
                     iter->setOrderingId(pose_dim + marg_landmark_size);
                     margLandmark.insert(std::make_pair(iter->getId(), iter));
-                    marg_landmark_size += iter->getLocalDim();
+                    marg_landmark_size += iter->getDoF();
                 }
             }
         }
@@ -639,27 +644,27 @@ namespace lego {
             edge->computeJacobians();
 
             auto jacobians = edge->getJacobians();
-            auto verticies = edge->getAllVertexes();
+            auto vertexes = edge->getAllVertexes();
             ii++;
 
-            assert(jacobians.size() == verticies.size());
-            for (size_t i = 0; i < verticies.size(); ++i) {
-                auto v_i = verticies[i];
+            assert(jacobians.size() == vertexes.size());
+            for (size_t i = 0; i < vertexes.size(); ++i) {
+                auto v_i = vertexes[i];
                 auto jacobian_i = jacobians[i];
                 ulong index_i = v_i->getOrderingId();
-                ulong dim_i = v_i->getLocalDim();
+                ulong dim_i = v_i->getDoF();
 
                 double drho;
                 MatXX robustInfo(edge->getInformation().rows(), edge->getInformation().cols());
                 edge->computeRobustInformation(drho, robustInfo);
-                for (size_t j = i; j < verticies.size(); ++j) {
-                    auto v_j = verticies[j];
+                for (size_t j = i; j < vertexes.size(); ++j) {
+                    auto v_j = vertexes[j];
                     auto jacobian_j = jacobians[j];
                     ulong index_j = v_j->getOrderingId();
-                    ulong dim_j = v_j->getLocalDim();
+                    ulong dim_j = v_j->getDoF();
 
                     MatXX hessian = jacobian_i.transpose() * robustInfo * jacobian_j;
-                    assert(hessian.rows() == v_i->getLocalDim() && hessian.cols() == v_j->getLocalDim());
+                    assert(hessian.rows() == v_i->getDoF() && hessian.cols() == v_j->getDoF());
 
                     H_marg.block(index_i, index_j, dim_i, dim_j) += hessian;
                     if (j != i) {
@@ -690,7 +695,7 @@ namespace lego {
 #endif
             for (auto &iter : margLandmark) {
                 ulong idx = iter.second->getOrderingId() - reserve_size;
-                ulong size = iter.second->getLocalDim();
+                ulong size = iter.second->getDoF();
                 Hmm_inv.block(idx, idx, size, size) = Hmm.block(idx, idx, size, size).inverse();
             }
 
@@ -712,7 +717,7 @@ namespace lego {
         /// move matrix blocks
         for (ulong k = margVertexes.size() - 1 ; k >= 0; --k) {
             ulong idx = margVertexes[k]->getOrderingId();
-            ulong dim = margVertexes[k]->getLocalDim();
+            ulong dim = margVertexes[k]->getDoF();
             marg_dim += dim;
 
             /// move the marginalized pose vertex blocks to the bottom right of Hmm

@@ -250,7 +250,7 @@ namespace legoslam {
         // 2. four layers LK optical flow with Gauss-Newton method
         int num_good_pts = TrackLastFrameLKOpticalFlow4LayerSelf();
 
-        LOG(INFO) << "Find " << num_good_pts << " in the last image. ";
+        LOG(INFO) << "Find: " << num_good_pts << " in the last image. ";
 
         return num_good_pts;
     }
@@ -350,7 +350,8 @@ namespace legoslam {
 
     bool Frontend::Reset() {
         // reset the frontend with a new map and backend
-        LOG(INFO) << "Tracking LOST... \nCaptain, we are LOST... \nTake it easy, bro. \nReseting... ";
+        LOG(INFO) << "Tracking LOST... \nCaptain, we are LOST... \nTake it easy, bro. \nReset it. ";
+        LOG(INFO) << "Resetting... ";
 
         // something need to be reset
         // hang the backend thread

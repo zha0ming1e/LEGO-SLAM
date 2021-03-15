@@ -18,7 +18,9 @@ namespace lego {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
         /// constructor
-        BaseEdge(int residual_dim, int vertex_num, const std::vector<std::string> &vertex_types=std::vector<std::string>());
+        BaseEdge(int residual_dim, int vertex_num,
+                 int measurement_rows, int measurement_cols=1,
+                 const std::vector<std::string> &vertex_types=std::vector<std::string>());
         /// destructor
         virtual ~BaseEdge();
 
@@ -32,8 +34,8 @@ namespace lego {
             return true;
         }
         /// set vertex
-        bool setVertex(const std::vector<std::shared_ptr<BaseVertex>> &vertices) {
-            vertexes_ = vertices;
+        bool setVertex(const std::vector<std::shared_ptr<BaseVertex>> &vertexes) {
+            vertexes_ = vertexes;
             return true;
         }
         /// get the vertex with index i
@@ -77,28 +79,32 @@ namespace lego {
         /// compute robust information matrix
         void computeRobustInformation(double &drho, MatXX &info) const;
         /// set measurement
-        void setMeasurement(const VecX &measurement) { measurement_ = measurement; }
+        void setMeasurement(const MatXX &measurement) { measurement_ = measurement; }
         /// get measurement
-        VecX getMeasurement() const { return measurement_; }
+        MatXX getMeasurement() const { return measurement_; }
         /// check valid
         bool checkValid();
         /// get ordering id
-        int getOrderingId() const { return ordering_id_; }
+        unsigned long getOrderingId() const { return ordering_id_; }
         /// set ordering id
         void setOrderingId(int id) { ordering_id_ = id; }
 
     protected:
+        /// ids
         unsigned long id_ = -1;
-        int ordering_id_ = -1;
-        std::vector<std::string> vertex_types_;
+        unsigned long ordering_id_ = -1;
+        /// vertexes
         std::vector<std::shared_ptr<BaseVertex>> vertexes_;
+        std::vector<std::string> vertex_types_;
+        /// residual
         VecX residual_;
+        /// measurement
+        MatXX measurement_;
         /// jacobians: dimension = residual X vertex[i]
         std::vector<MatXX> jacobians_;
         /// information matrix
         MatXX information_;
         MatXX sqrt_information_;
-        VecX measurement_;
         /// cost function
         CostFunction *cost_function_ = nullptr;
     };

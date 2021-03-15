@@ -5,10 +5,16 @@ namespace lego {
 
     unsigned long global_edge_id = 0;
 
-    BaseEdge::BaseEdge(int residual_dim, int vertex_num, const std::vector<std::string> &vertex_types) {
+    BaseEdge::BaseEdge(int residual_dim, int vertex_num,
+                       int measurement_rows, int measurement_cols,
+                       const std::vector<std::string> &vertex_types) {
+        /// residual
         residual_.resize(residual_dim, 1);
-        measurement_.resize(residual_dim, 1);
+        /// measurement
+        measurement_.resize(measurement_rows, measurement_cols);
+        /// vertex types
         if (!vertex_types.empty()) vertex_types_ = vertex_types;
+        /// jacobians
         jacobians_.resize(vertex_num);
         id_ = global_edge_id++;
 

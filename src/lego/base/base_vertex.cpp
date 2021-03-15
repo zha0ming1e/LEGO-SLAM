@@ -4,24 +4,25 @@ namespace lego {
 
     unsigned long global_vertex_id = 0;
 
-    BaseVertex::BaseVertex(int dim, int local_dim) {
-        estimate_.resize(dim, 1);
-        local_dimension_ = local_dim > 0 ? local_dim : dim;
+    BaseVertex::BaseVertex(int rows, int cols, int dof) {
+        estimate_rows_ = rows;
+        estimate_cols_ = cols;
+        estimate_.resize(rows, cols);
+        estimate_backup_.resize(rows, cols);
+        dof_ = dof > 0 ? dof : (rows * cols);
         id_ = global_vertex_id++;
     }
 
     BaseVertex::~BaseVertex() = default;
 
-    int BaseVertex::getDim() const {
-        return estimate_.rows();
+    unsigned long BaseVertex::getDim() const {
+        return estimate_.rows() * estimate_.cols();
     }
 
-    int BaseVertex::getLocalDim() const {
-        return local_dimension_;
+    int BaseVertex::getDoF() const {
+        return dof_;
     }
 
-    void BaseVertex::add(const VecX &delta) {
-        /// linear vector addition for default
-        estimate_ += delta;
-    }
+    /// linear addition for default
+    //void BaseVertex::add(const VecX &delta) { if (estimate_cols_ == 1) estimate_ += delta; }
 }

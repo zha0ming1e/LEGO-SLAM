@@ -230,14 +230,17 @@ namespace legoslam {
         LOG(INFO) << "Outlier/Inlier in pose estimating: " << cnt_outlier << "/" << features.size() - cnt_outlier;
 
         // set pose and outliers
-//            // 7D
+        // 7D
 //        Vec7 v_esti = vertex_pose->getEstimate();
 //        SE3 T(Eigen::Quaterniond(v_esti[6], v_esti[3], v_esti[4], v_esti[5]),
 //              v_esti.head<3>());
 
         // 6D
-        Vec6 v_esti = vertex_pose->getEstimate();
-        SE3 T = SE3::exp(v_esti);
+//        Vec6 v_esti = vertex_pose->getEstimate();
+//        SE3 T = SE3::exp(v_esti);
+
+        // SE3
+        SE3 T = SE3(vertex_pose->getEstimate());
 
         current_frame_->SetPose(T);
 
@@ -260,7 +263,7 @@ namespace legoslam {
         // 2. four layers LK optical flow with Gauss-Newton method
 //        int num_good_pts = TrackLastFrameLKOpticalFlow4LayerSelf();
 
-        LOG(INFO) << "Find " << num_good_pts << " in the last image. ";
+        LOG(INFO) << "Find: " << num_good_pts << " in the last image. ";
 
         return num_good_pts;
     }
@@ -360,7 +363,8 @@ namespace legoslam {
 
     bool Frontend::Reset() {
         // reset the frontend with a new map and backend
-        LOG(INFO) << "Tracking LOST... \nCaptain, we are LOST... \nTake it easy, bro. \nReseting... ";
+        LOG(INFO) << "Tracking LOST... \nCaptain, we are LOST... \nTake it easy, bro. \nReset it. ";
+        LOG(INFO) << "Resetting... ";
 
         // something need to be reset
         // hang the backend thread
